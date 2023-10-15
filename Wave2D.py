@@ -188,8 +188,6 @@ class Wave2D:
         N0 = 8
         for m in range(m):
             dx, err = self(N0, Nt, cfl=cfl, mx=mx, my=my, store_data=-1)
-            print(f"dx: {dx}, error {err}")
-            #print(type(err))
             E.append(err[-1])
             h.append(dx)
             N0 *= 2
@@ -210,9 +208,8 @@ class Wave2D_Neumann(Wave2D):
         return sp.cos(self.mx*sp.pi*x)*sp.cos(self.my*sp.pi*y)*sp.cos(self.w*t)
 
     def apply_bcs(self, Un):
-        # basically do nothing?
+        # basically do nothing?, anyway its a bad design, Neuman boundayr are set in the matrix D2
         i = 2
-
 
 def test_convergence_wave2d():
     sol = Wave2D()
@@ -225,27 +222,10 @@ def test_convergence_wave2d_neumann():
     r, E, h = solN.convergence_rates(mx=2, my=3)
     assert abs(r[-1]-2) < 0.05
 
-
-
-
-
-
-
-'''
-
 def test_exact_wave2d():
-    mx = my = 2
-    cfl = 1 / np.sqrt(2)
-    assert abs(r[-1]) < 1e-15
-
-
-
-
-
-
-def test_exact_wave2d():
-    mx = my = 2
-    cfl = 1 / np.sqrt(2)
-    assert abs(r[-1]) < 1e-15
-    raise NotImplementedError
-'''
+    sol_Dirichlet = Wave2D()
+    sol_Numann = Wave2D_Neumann()
+    _, err_Dirichlet = sol_Dirichlet(N=10, Nt=10, cfl = 1/np.sqrt(2), mx = 2, my = 2)
+    _, err_Neumann = sol_Numann(N=10, Nt=10, cfl = 1/np.sqrt(2), mx = 2, my = 2)
+    assert abs(err_Dirichlet[-1]) < 1e-15
+    assert abs(err_Neumann[-1]) < 1e-15
