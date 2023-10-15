@@ -48,10 +48,6 @@ class Wave2D:
         """Set the dispersion coefficient"""
         self._dt = value
 
-    def bla(self):
-        print("returning bla")
-        return "bla"
-
     def ue(self):
         """Return the exact standing wave"""
         return sp.sin(self.mx*sp.pi*x)*sp.sin(self.my*sp.pi*y)*sp.cos(self.w*t)
@@ -88,7 +84,6 @@ class Wave2D:
         u_exact = sp.lambdify((x, y, t), self.ue())(self.xij, self.yij, (t0)*self.dt)
         error = np.sqrt(self.dx**2 * np.sum((u - u_exact) ** 2))
         return [error]
-
 
 
     # apply boundary conditions
@@ -202,31 +197,51 @@ class Wave2D:
         r = [np.log(E[i-1]/E[i])/np.log(h[i-1]/h[i]) for i in range(1, m+1, 1)]
         return r, np.array(E), np.array(h)
 
+
+class Wave2D_Neumann(Wave2D):
+    def D2(self, N):
+        D = sparse.diags([1, -2, 1], [-1, 0, 1], (N+1, N+1), 'lil')
+        D[0, :2] = -2, 2
+        D[-1, -2:] = 2, -2
+        return D
+
+    def ue(self):
+        """Return the exact standing wave"""
+        return sp.cos(self.mx*sp.pi*x)*sp.cos(self.my*sp.pi*y)*sp.cos(self.w*t)
+
+    def apply_bcs(self, Un):
+        # basically do nothing?
+        i = 2
+
+
 def test_convergence_wave2d():
     sol = Wave2D()
     sol.convergence_rates(mx=2, my=3)
     r, E, h = sol.convergence_rates(mx=2, my=3)
     assert abs(r[-1]-2) < 1e-2
 
-
-'''
-
-    class Wave2D_Neumann(Wave2D):
-
-    def D2(self, N):
-        raise NotImplementedError
-
-    def ue(self, mx, my):
-        raise NotImplementedError
-
-    def apply_bcs(self):
-        raise NotImplementedError
-
-
 def test_convergence_wave2d_neumann():
     solN = Wave2D_Neumann()
     r, E, h = solN.convergence_rates(mx=2, my=3)
     assert abs(r[-1]-2) < 0.05
+
+
+
+
+
+
+
+'''
+
+def test_exact_wave2d():
+    mx = my = 2
+    cfl = 1 / np.sqrt(2)
+    assert abs(r[-1]) < 1e-15
+
+
+
+
+
 
 def test_exact_wave2d():
     mx = my = 2
